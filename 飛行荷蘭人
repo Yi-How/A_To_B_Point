@@ -1,0 +1,81 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+    
+public class Player : MonoBehaviour
+{
+     //A_PointToB_Point
+    public bool has_point;
+    public bool can_point;
+    public float time_Destroy;
+    public GameObject obj_Point;
+    [Range(0, 1)]
+    public float around;
+    private Vector3 in_point;
+    
+    void Start()
+    {
+        has_point = false;  //可以按飛
+        can_point = true;
+    }
+    
+    void Updata(){
+      if (Input.GetKeyDown(KeyCode.Q))
+        {
+            has_point = true;
+        }
+    }
+    //飛行荷蘭人
+    void AToB()
+    {
+        if (!has_point)
+            return;
+
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
+        if (Input.GetKeyDown(KeyCode.Mouse0) && Physics.Raycast(ray, out hit) && can_point)
+        {
+            can_point = false;
+            Debug.DrawLine(Camera.main.transform.position, hit.transform.position, Color.red, 0.1f, true);
+            in_point = hit.point;
+
+            //提示條
+            GameObject prefab_point = Instantiate(obj_Point, in_point, Quaternion.identity);
+            Destroy(prefab_point, time_Destroy);
+
+            StartCoroutine(WaitCanDestroy());
+        }
+
+        //around = (!can_point)? around += 0.1f: around -= 0.1f;
+        if (!can_point)
+        {
+            gravity = 9.8f;
+            if (Input.GetKey(KeyCode.Mouse1))
+            {
+                m_Vector.y = 0;
+                gravity = 0f;
+                around += 0.5f * Time.deltaTime;
+            }
+            else
+            {
+                around -= 0.1f;
+            }
+        }
+        else
+        {
+            around -= 0.1f;
+            gravity = 9.8f;
+        }
+
+        transform.position = Vector3.Lerp(transform.position, in_point, around);
+
+        around = Mathf.Clamp(around, 0, 1);
+    }
+
+    IEnumerator WaitCanDestroy()
+    {
+        yield return new WaitForSeconds(time_Destroy);
+        can_point = true;
+        has_point = false;
+    }
+}
